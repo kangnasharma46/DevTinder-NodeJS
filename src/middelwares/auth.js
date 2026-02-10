@@ -6,7 +6,7 @@ const adminAuth = (req, res, next) => {
     next();
   } else {
     console.log("admin authorize error");
-    res.statusCode(404).send("unauthorize user");
+    res.status(404).send("unauthorize user");
   }
 };
 
@@ -18,7 +18,7 @@ const userAuth = (req, res, next) => {
     next();
   } else {
     console.log("user unauthorize error");
-    res.statusCode(404).send("unauthorize user");
+    res.status(404).send("unauthorize user");
   }
 };
 
