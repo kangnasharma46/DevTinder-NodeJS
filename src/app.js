@@ -3,16 +3,103 @@ const express = require("express");
 const app = express();
 const connectDb = require("./config/database");
 const User = require("./models/userModel");
-const { default: mongoose } = require("mongoose");
-
+const { SignupValidation } = require("./helper/validation");
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 //Add middelware orovided by express
 app.use(express.json());
-
+app.use(cookieParser());
 //Signup API
 app.post("/signup", async (req, res, next) => {
-  const userObj = new User(req.body);
-  await userObj.save();
-  res.send("user saved successfully");
+  SignupValidation(req.body);
+
+  const {
+    firstName,
+    lastName,
+    emailId,
+    password,
+    age,
+    skills,
+    mobileNumber,
+    gender,
+  } = req.body;
+  //Encrypt Password
+  const hashPassword = await bcrypt.hash(password, 10);
+  try {
+    const userObj = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashPassword,
+      age,
+      skills,
+      mobileNumber,
+      gender,
+    });
+
+    await userObj.save();
+    res.send("user saved successfully");
+  } catch (err) {
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
+  }
+});
+
+//Login APIoooooo
+app.post("/login", async (req, res, next) => {
+  const { emailId, password } = req.body;
+  console.log(req.body);
+  //check whether user is present in DB or not
+  try {
+    const userData = await User.findOne({ emailId: emailId });
+    if (!userData) {
+      throw new Error("Invalid credentials.");
+    }
+    //check Valid password
+    const isPassword = bcrypt.compare(password, userData.password);
+    const token = await jwt.sign({ _id: userData.id }, "devtinder@1102");
+    //Send cookie to user
+    if (!isPassword) {
+      throw new Error("Invalid credentials.");
+    } else {
+      res.cookie("token", token);
+      res.send("Login Succesfull");
+    }
+  } catch (err) {
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
+  }
+});
+
+//Get Profile API
+
+app.get("/profile", async (req, res) => {
+  const cookies = req.cookies;
+  const { token } = cookies;
+  try {
+    if (!token) {
+      throw new Error("invalid token");
+    }
+    const decodeCookie = await jwt.verify(token, "devtinder@1102");
+    const { _id } = decodeCookie;
+    const userData = await User.findById(_id);
+    console.log(_id);
+    if (!userData) {
+      throw new Error("user does not exists");
+    } else {
+      res.send(userData);
+    }
+  } catch (err) {
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
+  }
 });
 
 //get user API
@@ -26,12 +113,14 @@ app.get("/user", async (req, res) => {
       res.send(user);
     }
   } catch (err) {
-    res.status(404).send("something went wrong");
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
   }
 });
 
 //get all user API
-
 app.get("/getAllUser", async (req, res) => {
   const userEmail = req.body.emailId;
   try {
@@ -42,7 +131,10 @@ app.get("/getAllUser", async (req, res) => {
       res.send(user);
     }
   } catch (err) {
-    res.status(404).send("something went wrong");
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
   }
 });
 
@@ -57,29 +149,50 @@ app.delete("/user", async (req, res) => {
       res.send("user deleted successfully");
     }
   } catch (err) {
-    res.status(404).send("something went wrong");
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
   }
 });
 
 //update user API
-app.patch("/user", async (req, res) => {
+app.patch("/user/:userId", async (req, res) => {
   const userData = req.body;
+  const userId = req.params?.userId;
   try {
-    const user = await User.findByIdAndUpdate(
-      { _id: req.body.userId },
-      userData,
-      {
-        returnDocument: "after",
-        runValidators: true,
-      },
+    const AVAILABLE_UPADTE = [
+      "password",
+      "age",
+      "mobileNumber",
+      "profilePic",
+      "About",
+      "skills",
+    ];
+    const isUpdatedAllowed = Object.keys(userData).every((k) =>
+      AVAILABLE_UPADTE.includes(k),
     );
+    if (!isUpdatedAllowed) {
+      // res.status(400).send("update not allowed");
+      throw new Error("update not allowed");
+    }
+    if (userData.skills?.length > 10) {
+      throw new Error("Skills cannot be more than 10");
+    }
+    const user = await User.findByIdAndUpdate({ _id: userId }, userData, {
+      returnDocument: "after",
+      runValidators: true,
+    });
     if (!user) {
       res.status(404).send("user not found");
     } else {
       res.send("user updated successfully");
     }
   } catch (err) {
-    res.status(404).send("something went wrong");
+    res.status(400).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
   }
 });
 
