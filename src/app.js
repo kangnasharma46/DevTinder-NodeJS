@@ -6,7 +6,7 @@ const User = require("./models/userModel");
 const { SignupValidation } = require("./helper/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middelwares/auth");
 //Add middelware orovided by express
 app.use(express.json());
 app.use(cookieParser());
@@ -41,7 +41,7 @@ app.post("/signup", async (req, res, next) => {
     await userObj.save();
     res.send("user saved successfully");
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
@@ -51,7 +51,6 @@ app.post("/signup", async (req, res, next) => {
 //Login APIoooooo
 app.post("/login", async (req, res, next) => {
   const { emailId, password } = req.body;
-  console.log(req.body);
   //check whether user is present in DB or not
   try {
     const userData = await User.findOne({ emailId: emailId });
@@ -59,8 +58,8 @@ app.post("/login", async (req, res, next) => {
       throw new Error("Invalid credentials.");
     }
     //check Valid password
-    const isPassword = bcrypt.compare(password, userData.password);
-    const token = await jwt.sign({ _id: userData.id }, "devtinder@1102");
+    const isPassword = await userData.isValidPassword(password);
+    const token = await userData.getJWT();
     //Send cookie to user
     if (!isPassword) {
       throw new Error("Invalid credentials.");
@@ -69,7 +68,7 @@ app.post("/login", async (req, res, next) => {
       res.send("Login Succesfull");
     }
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
@@ -78,24 +77,11 @@ app.post("/login", async (req, res, next) => {
 
 //Get Profile API
 
-app.get("/profile", async (req, res) => {
-  const cookies = req.cookies;
-  const { token } = cookies;
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    if (!token) {
-      throw new Error("invalid token");
-    }
-    const decodeCookie = await jwt.verify(token, "devtinder@1102");
-    const { _id } = decodeCookie;
-    const userData = await User.findById(_id);
-    console.log(_id);
-    if (!userData) {
-      throw new Error("user does not exists");
-    } else {
-      res.send(userData);
-    }
+    res.send(req.user);
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
@@ -113,7 +99,7 @@ app.get("/user", async (req, res) => {
       res.send(user);
     }
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
@@ -131,7 +117,7 @@ app.get("/getAllUser", async (req, res) => {
       res.send(user);
     }
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
@@ -149,7 +135,7 @@ app.delete("/user", async (req, res) => {
       res.send("user deleted successfully");
     }
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
@@ -189,7 +175,7 @@ app.patch("/user/:userId", async (req, res) => {
       res.send("user updated successfully");
     }
   } catch (err) {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
       message: err.message || "Something went wrong",
     });
