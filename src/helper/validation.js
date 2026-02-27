@@ -27,4 +27,21 @@ const SignupValidation = (req) => {
   }
 };
 
-module.exports = { SignupValidation };
+const ProfileEditDataValidation = (req) => {
+  const allowedEditFields = [
+    "firstName",
+    "lastName",
+    "photoUrl",
+    "gender",
+    "age",
+    "About",
+    "skills",
+  ];
+
+  const isEditAllowed = Object.keys(req).every((field) =>
+    allowedEditFields.includes(field),
+  );
+  return isEditAllowed;
+};
+
+module.exports = { SignupValidation, ProfileEditDataValidation };
