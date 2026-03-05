@@ -4,27 +4,27 @@ const connectionRequestSchema = new mongoose.Schema(
   {
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
-      require: true,
+      ref: "User",
+      required: true,
     },
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
-      require: true,
+      ref: "User",
+      required: true,
     },
     status: {
       type: String,
+      required: true,
       enum: {
-        values: ["intersted", "rejected", "ignored", "accepted"],
-        message: "Invalid status values",
+        values: ["ignored", "interested", "accepted", "rejected"],
+        message: `{VALUE} is incorrect status type`,
       },
     },
   },
   { timestamps: true },
 );
 
-const connectionRequestModel = new mongoose.model(
-  "ConnectionRequest",
-  connectionRequestSchema,
-);
+// ConnectionRequest.find({fromUserId: 273478465864786587, toUserId: 273478465864786587})
 
 connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 });
 
@@ -37,4 +37,9 @@ connectionRequestSchema.pre("save", function (next) {
   next();
 });
 
-module.exports = connectionRequestModel;
+const ConnectionRequestModel = new mongoose.model(
+  "ConnectionRequest",
+  connectionRequestSchema,
+);
+
+module.exports = ConnectionRequestModel;
