@@ -6,17 +6,17 @@ const user = require("../models/userModel");
 
 //intersted and ignore requested api
 requestRouter.post(
-  "/send/request/:status/:toUserId",
+  "/request/send/:status/:userId",
   userAuth,
   async (req, res) => {
     try {
       const fromUserId = req.user._id;
       const status = req.params.status;
-      const toUserId = req.params.toUserId;
+      const toUserId = req.params.userId;
 
       //check status
       const allowedStatus = ["ignored", "intersted"];
-      if (!allowedStatus) {
+      if (!allowedStatus.includes(status)) {
         throw new Error("Invalid status");
       }
 
@@ -50,6 +50,43 @@ requestRouter.post(
       const data = await conReq.save();
       res.json({
         message: "request send successfully!!!!",
+        data: data,
+      });
+    } catch (err) {
+      res.status(404).json({
+        status: false,
+        message: err.message || "Something went wrong",
+      });
+    }
+  },
+);
+
+//intersted review api
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const loggedInUser = req.user;
+      const { status, requestId } = req.params;
+      const allowedStatus = ["accepted", "rejected"];
+      if (!allowedStatus.includes(status)) {
+        throw new Error("Invalid status type");
+      }
+      const connectionRequest = await ConnectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "interested",
+      });
+      if (!connectionRequest) {
+        return res
+          .status(404)
+          .json({ message: "Connection request not found" });
+      }
+      connectionRequest.status = status;
+      const data = await connectionRequest.save();
+      res.json({
+        message: "Connection request " + status,
         data: data,
       });
     } catch (err) {

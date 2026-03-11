@@ -1,16 +1,25 @@
 const express = require("express");
+const { userAuth } = require("../middelwares/auth");
+const ConnectionRequest = require("../models/connectionrequest");
 const userRouter = express.Router();
 
-//delete user API
-userRouter.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
+//get all  user  request API
+const USER_SAFE_DATA = "firstName lastName photoUrl age gender about skills";
+userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(userId);
-    if (!user) {
-      res.status(404).send("user not found");
-    } else {
-      res.send("user deleted successfully");
+    const loggedInUser = req.user;
+
+    const connectionRequests = await ConnectionRequest.find({
+      toUserId: loggedInUser._id,
+      status: "interested",
+    }).populate("fromUserId", USER_SAFE_DATA);
+    if (!connectionRequests) {
+      throw new Error("connection not found");
     }
+    res.json({
+      message: "data fetched successfully",
+      data: connectionRequests,
+    });
   } catch (err) {
     res.status(404).json({
       status: false,
@@ -19,43 +28,31 @@ userRouter.delete("/user", async (req, res) => {
   }
 });
 
-//update user API
-userRouter.patch("/user/:userId", async (req, res) => {
-  const userData = req.body;
-  const userId = req.params?.userId;
+userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
-    const AVAILABLE_UPADTE = [
-      "password",
-      "age",
-      "mobileNumber",
-      "profilePic",
-      "About",
-      "skills",
-    ];
-    const isUpdatedAllowed = Object.keys(userData).every((k) =>
-      AVAILABLE_UPADTE.includes(k),
-    );
-    if (!isUpdatedAllowed) {
-      // res.status(400).send("update not allowed");
-      throw new Error("update not allowed");
-    }
-    if (userData.skills?.length > 10) {
-      throw new Error("Skills cannot be more than 10");
-    }
-    const user = await User.findByIdAndUpdate({ _id: userId }, userData, {
-      returnDocument: "after",
-      runValidators: true,
+    const loggedInUser = req.user;
+
+    const connectionRequests = await ConnectionRequest.find({
+      $or: [
+        { toUserId: loggedInUser._id, status: "accepted" },
+        { fromUserId: loggedInUser._id, status: "accepted" },
+      ],
+    })
+      .populate("fromUserId", USER_SAFE_DATA)
+      .populate("toUserId", USER_SAFE_DATA);
+
+    console.log(connectionRequests);
+
+    const data = connectionRequests.map((row) => {
+      if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
+        return row.toUserId;
+      }
+      return row.fromUserId;
     });
-    if (!user) {
-      res.status(404).send("user not found");
-    } else {
-      res.send("user updated successfully");
-    }
+
+    res.json({ data });
   } catch (err) {
-    res.status(404).json({
-      status: false,
-      message: err.message || "Something went wrong",
-    });
+    res.status(400).send({ message: err.message });
   }
 });
 
