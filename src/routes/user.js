@@ -1,6 +1,7 @@
 const express = require("express");
 const { userAuth } = require("../middelwares/auth");
 const ConnectionRequest = require("../models/connectionrequest");
+const user = require("../models/userModel");
 const userRouter = express.Router();
 
 //get all  user  request API
@@ -27,7 +28,7 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
     });
   }
 });
-
+//get all  user  connections API
 userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -53,6 +54,55 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
     res.json({ data });
   } catch (err) {
     res.status(400).send({ message: err.message });
+  }
+});
+
+//get all feed
+userRouter.get("/user/feed", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
+
+    const connectionRequest = await ConnectionRequest.find({
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+    }).select("toUserId fromUserId");
+
+    const hideUsersFromFeed = new Set();
+    connectionRequest.forEach((req) => {
+      hideUsersFromFeed.add(req.fromUserId.toString());
+      hideUsersFromFeed.add(req.toUserId.toString());
+    });
+    const users = await user
+      .find({
+        $and: [
+          { _id: { $nin: Array.from(hideUsersFromFeed) } },
+          { _id: { $ne: loggedInUser._id } },
+        ],
+      })
+      .select(USER_SAFE_DATA)
+      .skip(skip)
+      .limit(limit);
+    console.log(user.countDocuments.length);
+    if (user.length > 0) {
+      res.json({
+        status: true,
+        users,
+      });
+    } else {
+      res.json({
+        status: false,
+        message: "No user found",
+      });
+    }
+  } catch (err) {
+    res.status(404).json({
+      status: false,
+      message: err.message || "Something went wrong",
+    });
   }
 });
 
