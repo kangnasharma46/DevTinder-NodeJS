@@ -4,7 +4,7 @@ const userAuth = async (req, res, next) => {
   const { token } = req.cookies;
   try {
     if (!token) {
-      res.status(401).json({
+      res.status(404).json({
         status: false,
         message: "please login",
       });
