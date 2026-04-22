@@ -7,16 +7,7 @@ const User = require("../models/userModel");
 authRouter.post("/signup", async (req, res, next) => {
   SignupValidation(req.body);
 
-  const {
-    firstName,
-    lastName,
-    emailId,
-    password,
-    age,
-    skills,
-    mobileNumber,
-    gender,
-  } = req.body;
+  const { firstName, lastName, emailId, password, age } = req.body;
   //Encrypt Password
   const hashPassword = await bcrypt.hash(password, 10);
   try {
@@ -26,13 +17,15 @@ authRouter.post("/signup", async (req, res, next) => {
       emailId,
       password: hashPassword,
       age,
-      skills,
-      mobileNumber,
-      gender,
     });
-
-    await userObj.save();
-    res.send("user saved successfully");
+    const savedUser = await userObj.save();
+    const token = await savedUser.getJWT();
+    res.cookie("token", token);
+    res.status(200).json({
+      status: true,
+      data: savedUser,
+      message: "signup successfull",
+    });
   } catch (err) {
     res.status(404).json({
       status: false,

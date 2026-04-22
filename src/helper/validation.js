@@ -1,16 +1,7 @@
 const validator = require("validator");
 
 const SignupValidation = (req) => {
-  const {
-    firstName,
-    lastName,
-    emailId,
-    password,
-    age,
-    gender,
-    mobileNumber,
-    skills,
-  } = req;
+  const { firstName, lastName, emailId, password, age, mobileNumber } = req;
 
   if (!firstName || !lastName) {
     throw new Error("Name is not valid");
@@ -20,8 +11,6 @@ const SignupValidation = (req) => {
     throw new Error("password is not valid");
   } else if (!age) {
     throw new Error("age is not valid");
-  } else if (!gender) {
-    throw new Error("gender is not valid");
   } else if (!mobileNumber) {
     throw new Error("mobileNumber is not valid");
   }
