@@ -2,86 +2,29 @@ const express = require("express");
 
 const app = express();
 const connectDb = require("./config/database");
-const User = require("./models/userModel");
-const { default: mongoose } = require("mongoose");
 
+const cookieParser = require("cookie-parser");
+const { profileRouter } = require("./routes/profile");
+const { authRouter } = require("./routes/auth");
+const { userRouter } = require("./routes/user");
+const { requestRouter } = require("./routes/request");
+const cors = require("cors");
 //Add middelware orovided by express
 app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
+// app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
-//Signup API
-app.post("/signup", async (req, res, next) => {
-  const userObj = new User(req.body);
-  await userObj.save();
-  res.send("user saved successfully");
-});
-
-//get user API
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
-  try {
-    const user = await User.findOne({ emailId: userEmail });
-    if (!user) {
-      res.status(404).send("user not found");
-    } else {
-      res.send(user);
-    }
-  } catch (err) {
-    res.status(404).send("something went wrong");
-  }
-});
-
-//get all user API
-
-app.get("/getAllUser", async (req, res) => {
-  const userEmail = req.body.emailId;
-  try {
-    const user = await User.find({});
-    if (!user) {
-      res.status(404).send("no user not found");
-    } else {
-      res.send(user);
-    }
-  } catch (err) {
-    res.status(404).send("something went wrong");
-  }
-});
-
-//delete user API
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    const user = await User.findByIdAndDelete(userId);
-    if (!user) {
-      res.status(404).send("user not found");
-    } else {
-      res.send("user deleted successfully");
-    }
-  } catch (err) {
-    res.status(404).send("something went wrong");
-  }
-});
-
-//update user API
-app.patch("/user", async (req, res) => {
-  const userData = req.body;
-  try {
-    const user = await User.findByIdAndUpdate(
-      { _id: req.body.userId },
-      userData,
-      {
-        returnDocument: "after",
-        runValidators: true,
-      },
-    );
-    if (!user) {
-      res.status(404).send("user not found");
-    } else {
-      res.send("user updated successfully");
-    }
-  } catch (err) {
-    res.status(404).send("something went wrong");
-  }
-});
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", userRouter);
+app.use("/", requestRouter);
+app.use("/", userRouter);
 
 connectDb()
   .then(() => {
