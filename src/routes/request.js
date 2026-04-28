@@ -1,8 +1,8 @@
 const express = require("express");
 const requestRouter = express.Router();
-const { userAuth } = require("../../src/middelwares/auth");
-const ConnectionRequest = require("../../src/models/connectionrequest");
-const user = require("../../src/models/userModel");
+const { userAuth } = require("../middelwares/auth");
+const ConnectionRequest = require("../models/connectionrequest");
+const user = require("../models/userModel");
 
 //intersted and ignore requested api
 requestRouter.post(

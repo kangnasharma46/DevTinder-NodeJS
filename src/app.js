@@ -1,13 +1,13 @@
 const express = require("express");
 
 const app = express();
-const connectDb = require("../src/config/database");
+const connectDb = require("./config/database");
 
 const cookieParser = require("cookie-parser");
-const { profileRouter } = require("../src/routes/profile");
-const { authRouter } = require("../src/routes/auth");
-const { userRouter } = require("../src/routes/user");
-const { requestRouter } = require("../src/routes/request");
+const { profileRouter } = require("./routes/profile");
+const { authRouter } = require("./routes/auth");
+const { userRouter } = require("./routes/user");
+const { requestRouter } = require("./routes/request");
 const cors = require("cors");
 //Add middelware orovided by express
 app.use(express.json());
