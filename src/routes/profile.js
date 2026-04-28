@@ -1,9 +1,9 @@
 const express = require("express");
 const profileRouter = express.Router();
 const bcrypt = require("bcrypt");
-const User = require("../../src/models/userModel");
-const { userAuth } = require("../../src/middelwares/auth");
-const { ProfileEditDataValidation } = require("../../src/helper/validation");
+const User = require("../models/userModel");
+const { userAuth } = require("../middelwares/auth");
+const { ProfileEditDataValidation } = require("../helper/validation");
 //Get Profile API
 
 profileRouter.get("/profile/view", userAuth, async (req, res) => {

@@ -1,7 +1,7 @@
 const express = require("express");
-const { userAuth } = require("../../src/middelwares/auth");
-const ConnectionRequest = require("../../src/models/connectionrequest");
-const user = require("../../src/models/userModel");
+const { userAuth } = require("../middelwares/auth");
+const ConnectionRequest = require("../models/connectionrequest");
+const user = require("../models/userModel");
 const userRouter = express.Router();
 
 //get all  user  request API

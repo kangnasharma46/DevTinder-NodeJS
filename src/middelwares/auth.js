@@ -1,4 +1,4 @@
-const User = require("../../src/models/userModel");
+const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const userAuth = async (req, res, next) => {
   const { token } = req.cookies;
