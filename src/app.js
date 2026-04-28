@@ -1,13 +1,13 @@
 const express = require("express");
 
 const app = express();
-const connectDb = require("./config/database");
+const connectDb = require("../src/config/database");
 
 const cookieParser = require("cookie-parser");
-const { profileRouter } = require("./routes/profile");
-const { authRouter } = require("./routes/auth");
-const { userRouter } = require("./routes/user");
-const { requestRouter } = require("./routes/request");
+const { profileRouter } = require("../src/routes/profile");
+const { authRouter } = require("../src/routes/auth");
+const { userRouter } = require("../src/routes/user");
+const { requestRouter } = require("../src/routes/request");
 const cors = require("cors");
 //Add middelware orovided by express
 app.use(express.json());
@@ -30,7 +30,7 @@ connectDb()
   .then(() => {
     console.log("db successfully connected");
     app.listen(7777, () => {
-      console.log("Server start succesfully!!!!");
+      console.log("Server start succesfully!!!! ,7777");
     });
   })
   .catch(() => {
