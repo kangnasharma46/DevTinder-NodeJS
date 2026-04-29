@@ -1,7 +1,7 @@
 const express = require("express");
 const { userAuth } = require("../middelwares/auth");
 const ConnectionRequest = require("../models/connectionrequest");
-const user = require("../models/userModel");
+const User = require("../models/userModel");
 const userRouter = express.Router();
 
 //get all  user  request API
@@ -76,18 +76,17 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       hideUsersFromFeed.add(req.fromUserId.toString());
       hideUsersFromFeed.add(req.toUserId.toString());
     });
-    const users = await user
-      .find({
-        $and: [
-          { _id: { $nin: Array.from(hideUsersFromFeed) } },
-          { _id: { $ne: loggedInUser._id } },
-        ],
-      })
+    const users = await User.find({
+      $and: [
+        { _id: { $nin: Array.from(hideUsersFromFeed) } },
+        { _id: { $ne: loggedInUser._id } },
+      ],
+    })
       .select(USER_SAFE_DATA)
       .skip(skip)
       .limit(limit);
-    console.log(user.countDocuments.length);
-    if (user.length > 0) {
+    console.log(User.countDocuments.length);
+    if (User.length > 0) {
       res.json({
         status: true,
         users,

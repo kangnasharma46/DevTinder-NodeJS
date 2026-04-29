@@ -2,7 +2,7 @@ const express = require("express");
 const requestRouter = express.Router();
 const { userAuth } = require("../middelwares/auth");
 const ConnectionRequest = require("../models/connectionrequest");
-const user = require("../models/userModel");
+const User = require("../models/userModel");
 
 //intersted and ignore requested api
 requestRouter.post(
@@ -21,7 +21,7 @@ requestRouter.post(
       }
 
       //to check if valid user
-      const validUser = await user.findById(toUserId);
+      const validUser = await User.findById(toUserId);
       if (!validUser) {
         throw new Error("User not exists");
       }
