@@ -10,16 +10,16 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
-    const connectionRequests = await ConnectionRequest.find({
+    const connectionReq = await ConnectionRequest.find({
       toUserId: loggedInUser._id,
       status: "interested",
     }).populate("fromUserId", USER_SAFE_DATA);
-    if (!connectionRequests) {
+    if (!connectionReq) {
       throw new Error("connection not found");
     }
     res.json({
       message: "data fetched successfully",
-      data: connectionRequests,
+      data: connectionReq,
     });
   } catch (err) {
     res.status(404).json({
@@ -33,7 +33,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
-    const connectionRequests = await ConnectionRequest.find({
+    const connectionReq = await ConnectionRequest.find({
       $or: [
         { toUserId: loggedInUser._id, status: "accepted" },
         { fromUserId: loggedInUser._id, status: "accepted" },
@@ -42,9 +42,9 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       .populate("fromUserId", USER_SAFE_DATA)
       .populate("toUserId", USER_SAFE_DATA);
 
-    console.log(connectionRequests);
+    console.log(connectionReq);
 
-    const data = connectionRequests.map((row) => {
+    const data = connectionReq.map((row) => {
       if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
         return row.toUserId;
       }
@@ -67,12 +67,12 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
     limit = limit > 50 ? 50 : limit;
     const skip = (page - 1) * limit;
 
-    const connectionRequest = await ConnectionRequest.find({
+    const connectionReq = await ConnectionRequest.find({
       $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
     }).select("toUserId fromUserId");
 
     const hideUsersFromFeed = new Set();
-    connectionRequest.forEach((req) => {
+    connectionReq.forEach((req) => {
       hideUsersFromFeed.add(req.fromUserId.toString());
       hideUsersFromFeed.add(req.toUserId.toString());
     });
